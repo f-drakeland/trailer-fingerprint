@@ -1,3 +1,6 @@
 .zig-cache/
 zig-out/
 .DS_Store
+
+# Researcher-supplied originals stay local; only documented excerpts are fixtures.
+captures/private/

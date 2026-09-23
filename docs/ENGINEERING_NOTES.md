@@ -18,8 +18,9 @@ See `HARDWARE_BOUNDARY.md` for that contract.
 
 ## Current boundary
 
-The project is still a pure simulator. Its job is to settle software behavior before
-hardware is involved.
+The electrical diagnostic subsystem remains a simulator. The main identity path
+now also inspects researcher-supplied J1708 captures. This is not hardware
+integration or field-validated identification. See [PROJECT_STATUS.md](PROJECT_STATUS.md).
 
 ## Why traces, not snapshots
 

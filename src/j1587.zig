@@ -37,10 +37,12 @@ pub const Message = struct {
     data: []const u8,
 };
 
-/// Parse one checksum-stripped J1708/J1587 message for a page-one PID >= 128.
-/// For these PIDs the third byte is the parameter-data byte count.
+/// Parse one checksum-stripped, page-one variable-length PID (192..253).
+/// Fixed-length requests and PID 254 escape data do not have this layout.
 pub fn parseMessage(message: []const u8) DecodeError!Message {
     if (message.len < 3) return error.TooShort;
+
+    if (message[1] < 192 or message[1] > 253) return error.UnsupportedPid;
 
     const data_count: usize = message[2];
     if (message.len != 3 + data_count) return error.InvalidLength;
@@ -177,4 +179,10 @@ test "decode PID 245 total vehicle distance from public example bytes" {
 test "decode trailer VIN parameter data" {
     const vin = try decodeVinData("1DEMO000000000001");
     try std.testing.expectEqualStrings("1DEMO000000000001", vin);
+}
+
+test "fixed requests and escape payloads are never variable-length identity messages" {
+    try std.testing.expectError(error.UnsupportedPid, parseMessage("\x88\x80\xf5\x89"));
+    try std.testing.expectError(error.UnsupportedPid, parseMessage("\x88\xff\x80\x99\x89"));
+    try std.testing.expectError(error.UnsupportedPid, parseMessage("\x89\xfe\xac\x01"));
 }

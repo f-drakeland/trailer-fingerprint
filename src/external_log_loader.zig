@@ -16,6 +16,7 @@ const capture_loader = @import("capture_loader.zig");
 
 pub const ExternalLogError = capture_loader.CaptureError || error{
     OddHexDigitCount,
+    UnsupportedTransport,
 };
 
 pub fn parse(text: []const u8) ExternalLogError!capture_loader.Capture {
@@ -32,12 +33,7 @@ pub fn parse(text: []const u8) ExternalLogError!capture_loader.Capture {
 
         if (capture.frame_count >= capture_loader.max_frames) return error.TooManyFrames;
 
-        const frame = if (prettyMsgPayload(line)) |payload|
-            try parsePrettyPayload(payload)
-        else if (payloadSlice(line)) |payload|
-            try parsePayload(payload)
-        else
-            continue;
+        const frame = (try parseRecord(line)) orelse continue;
         // Real-world logs may contain non-J1587 chatter or truncated lines.
         // Keep the import boundary strict enough that downstream parsing does
         // not receive impossible frames.
@@ -49,6 +45,19 @@ pub fn parse(text: []const u8) ExternalLogError!capture_loader.Capture {
 
     if (capture.frame_count == 0) return error.NoFrames;
     return capture;
+}
+
+/// Decode a single logger record without assuming it is valid J1587.
+/// Short records remain available to the audit layer instead of aborting import.
+/// SocketCAN records have a different protocol boundary and are never J1587.
+pub fn parseRecord(raw_line: []const u8) ExternalLogError!?capture_loader.Frame {
+    const line = std.mem.trim(u8, raw_line, " \t\r");
+    if (line.len == 0 or line[0] == '#') return null;
+    if (line[0] == '(' and std.mem.indexOfScalar(u8, line, '#') != null and
+        std.mem.indexOf(u8, line, "j1708") == null) return error.UnsupportedTransport;
+    if (prettyMsgPayload(line)) |payload| return try parsePrettyPayload(payload);
+    if (payloadSlice(line)) |payload| return try parsePayload(payload);
+    return null;
 }
 
 fn prettyMsgPayload(line: []const u8) ?[]const u8 {

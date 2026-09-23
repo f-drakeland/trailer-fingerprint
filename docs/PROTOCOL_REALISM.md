@@ -1,5 +1,9 @@
 # Protocol realism added in v0.8
 
+Historical version notes. For the current implementation, evidence and limitations,
+see [PROJECT_STATUS.md](PROJECT_STATUS.md) and [RESEARCH_CORPUS.md](RESEARCH_CORPUS.md).
+
+
 v0.7 used the correct PID 243 field shape but encoded long component identities
 as one oversized replay message. That was useful for the fingerprint boundary,
 but it was not a valid representation of a J1708 packet when the payload grew

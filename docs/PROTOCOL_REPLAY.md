@@ -1,5 +1,9 @@
 # Protocol Replay Boundary (v0.7)
 
+Historical version notes. For the current implementation, evidence and limitations,
+see [PROJECT_STATUS.md](PROJECT_STATUS.md) and [RESEARCH_CORPUS.md](RESEARCH_CORPUS.md).
+
+
 v0.7 is the first Trailer Fingerprint prototype that accepts **protocol-shaped identity bytes** instead of pre-normalized module records.
 
 It intentionally starts *after* the J2497 physical layer. Open-source J2497 tooling documents that a decoded PLC message body typically contains a J1708 message. Trailer Fingerprint therefore treats the future transport path as:

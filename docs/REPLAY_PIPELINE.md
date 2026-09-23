@@ -2,7 +2,7 @@
 
 The equipment fingerprint engine should never depend directly on a specific diagnostic adapter or bus protocol.
 
-The current v0.6 pipeline is:
+The preserved v0.6 synthetic pipeline is:
 
 ```text
 synthetic discovered modules
@@ -31,6 +31,20 @@ DiscoveredUnit / DiscoveredModule
 ```
 
 without rewriting the continuity logic.
+
+## Current file path (2026-09-23)
+
+```text
+external J1708 log -> record audit -> supported identity/telemetry frames
+native .tfc ------> strict frame loader -> protocol ingest
+protocol ingest -> PID 192 reassembly / enrichment -> normalizer -> fingerprint
+```
+
+The audit counts directed requests separately from observed sources. Unknown,
+short and unsupported records do not create identities. Native captures retain
+strict validation. SocketCAN input is rejected until a J1939 adapter exists.
+See [PROJECT_STATUS.md](PROJECT_STATUS.md) for current limits and
+[RESEARCH_CORPUS.md](RESEARCH_CORPUS.md) for authentic negative fixtures.
 
 ## Why endpoint is not identity
 

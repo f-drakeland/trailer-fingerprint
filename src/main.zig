@@ -1,4 +1,5 @@
 const std = @import("std");
+const capture_audit = @import("capture_audit.zig");
 const capture_loader = @import("capture_loader.zig");
 const external_log_loader = @import("external_log_loader.zig");
 const fingerprint = @import("fingerprint.zig");
@@ -15,6 +16,7 @@ const default_captures = [_][]const u8{
     "captures/fleet_twin.tfc",
     "captures/current_trailer_truckduck.log",
     "captures/public_pretty_j1587_sample.log",
+    "src/fixtures/nov4thhardstop-excerpt.j1708log",
 };
 
 pub fn main(init: std.process.Init) !void {
@@ -41,13 +43,22 @@ pub fn main(init: std.process.Init) !void {
 }
 
 fn runCapture(io: std.Io, allocator: std.mem.Allocator, path: []const u8) !void {
-    const contents = try std.Io.Dir.cwd().readFileAlloc(io, path, allocator, .limited(64 * 1024));
+    const contents = try std.Io.Dir.cwd().readFileAlloc(io, path, allocator, .limited(32 * 1024 * 1024));
     defer allocator.free(contents);
 
     var capture = if (isNativeCapture(path))
         try capture_loader.parse(contents)
-    else
-        try external_log_loader.parse(contents);
+    else blk: {
+        const audit = capture_audit.inspect(contents) catch |err| {
+            if (err == error.UnsupportedTransport) {
+                std.debug.print("Unsupported transport: {s} contains SocketCAN frames. Use a J1939 analysis tool; CAN addresses are not J1587 MIDs.\n", .{path});
+            }
+            return err;
+        };
+        std.debug.print("Inspecting: {s}\n", .{path});
+        capture_audit.print(&audit);
+        break :blk audit.capture;
+    };
 
     // External logs generally do not carry our metadata. Give the observation
     // a useful name while leaving class/position unknown rather than guessing.
@@ -171,6 +182,7 @@ test "pretty_j1587 public sample reaches telemetry without inventing identity" {
 }
 
 test {
+    _ = capture_audit;
     _ = capture_loader;
     _ = external_log_loader;
     _ = fingerprint;
@@ -178,4 +190,17 @@ test {
     _ = multisection;
     _ = normalizer;
     _ = protocol_ingest;
+}
+
+test "authentic request-only excerpt yields insufficient identity through full pipeline" {
+    var audit = try capture_audit.inspect(@embedFile("fixtures/nov4thhardstop-excerpt.j1708log"));
+    var slices: [capture_loader.max_frames][]const u8 = undefined;
+    var ingested = try protocol_ingest.ingestUnit("research excerpt", .unknown, .unknown, audit.capture.messageSlices(&slices));
+    try std.testing.expectEqual(@as(usize, 0), ingested.module_count);
+    try std.testing.expectEqual(@as(usize, 0), ingested.endpoint_count);
+    try std.testing.expectEqual(@as(usize, 0), ingested.distance_count);
+    try std.testing.expect(ingested.vin == null);
+    const normalized = try normalizer.normalize(ingested.discoveredUnit());
+    const matched = fingerprint.matchEquipment(normalized.snapshot(), &scenarios.known_profiles);
+    try std.testing.expectEqual(@import("fingerprint_model.zig").MatchStatus.insufficient_identity, matched.status);
 }
