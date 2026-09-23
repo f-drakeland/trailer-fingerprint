@@ -1,3 +1,32 @@
+# Trailer Fingerprint
+
+Trailer Fingerprint is an experimental open system for persistent identity and
+shared histories of heavy-duty towed equipment: heavy-duty commercial semitrailers,
+converter dollies, doubles, and related towed equipment. The goal is evidence-based equipment
+history, not fleet-specific tracking.
+
+The intended network model allows participating devices to contribute observations
+to shared equipment history, so later encounters can benefit from evidence collected
+by other participants. Equipment identity and component identity are separate: controllers can be
+replaced or migrate between units, while continuity of the physical equipment must
+be supported by the available evidence. VIN is useful but optional.
+
+Shared history does not require publicly exposing raw serial numbers, VINs, precise
+locations, or driver or tractor information. Privacy boundaries are part of the
+design, including possible opaque public equipment and component IDs.
+
+This remains a research-stage project. The existing v0.11 code is a local
+protocol/fingerprint research baseline on Zig 0.16.0, not a completed network
+implementation. It starts after J2497/PLC waveform demodulation; sufficient
+real-world identity-bearing captures remain the main research bottleneck. Synthetic
+fixtures exercise engineering behavior, not field-validated identification.
+
+See [the shared network model](docs/NETWORK_MODEL.md) for the design principles,
+evidence limits, and privacy boundaries. The version notes below preserve the
+technical development history.
+
+---
+
 # Trailer Fingerprint v0.11
 
 ## v0.11: public protocol sample + telemetry/identity separation
