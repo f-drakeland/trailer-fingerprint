@@ -21,9 +21,78 @@ implementation. It starts after J2497/PLC waveform demodulation; sufficient
 real-world identity-bearing captures remain the main research bottleneck. Synthetic
 fixtures exercise engineering behavior, not field-validated identification.
 
-See [the shared network model](docs/NETWORK_MODEL.md) for the design principles,
+See [current project status](docs/PROJECT_STATUS.md) and the
+[research capture record](docs/RESEARCH_CORPUS.md) for the latest evidence and
+validation. See [the shared network model](docs/NETWORK_MODEL.md) for the design principles,
 evidence limits, and privacy boundaries. The version notes below preserve the
 technical development history.
+
+## Start here / Help wanted
+
+Trailer Fingerprint explores whether observations of replaceable electronic
+components can support persistent trailer identity. The current deliverable is a
+local Zig parser and fingerprint prototype; real identity-bearing captures are
+the main missing evidence.
+
+Use **Zig 0.16.0**. Run `zig build test`, then `zig build run` from the repository
+root. The included fixtures work without hardware or private captures.
+
+The most useful contributions are:
+
+- **Protocol review:** challenge request/source handling, framing assumptions or
+  identity decoding with a small reproducer and a protocol reference.
+- **Capture knowledge:** help identify logger/checksum conventions or provide
+  shareable J1708/J2497 diagnostic exchanges, especially MID 137 / PID 254.
+- **Focused Zig fixes:** improve parsing or evidence handling with a regression
+  test. Keep unrelated refactors and new dependencies out of the same change.
+
+For a bug or research observation, open an issue with expected versus observed
+behavior and the smallest useful example. For a capture, include its origin,
+logger/adapter, equipment context, checksum handling and whether diagnostics were
+actively requested; mark unknown details explicitly. Share only data you have
+permission to share, with sensitive identifiers redacted and redactions documented.
+A decoder claim needs observed bytes and independent identity confirmation.
+
+Before a larger feature, describe the gap it addresses in an issue. For a code
+change, run the tests and relevant replay, and update affected documentation.
+Preserve uncertainty: a request is not a response, and a controller serial alone
+is not permanent trailer identity.
+
+**Find the details:** [status and limits](docs/PROJECT_STATUS.md) ·
+[capture evidence and provenance](docs/RESEARCH_CORPUS.md) ·
+[identity design](docs/NETWORK_MODEL.md).
+Parser work starts in [capture_audit.zig](src/capture_audit.zig) and
+[j1587.zig](src/j1587.zig); matching lives in [fingerprint.zig](src/fingerprint.zig).
+
+## Researcher-capture inspection
+
+External logs now pass through a conservative record audit before identity ingest.
+PID 128 and extended PID 384 requests retain distinct source and destination
+counts. Short, malformed, and ambiguous records are counted separately. PID 254
+escape payloads remain opaque; their bytes are not interpreted as identities.
+The variable-length decoder now explicitly accepts only page-one PIDs 192–253.
+
+The default corpus includes a documented 20-record excerpt from the researcher-
+supplied `nov4thhardstop.j1708log`. It reports **MID 137 queried; no response
+observed**, then **INSUFFICIENT IDENTITY EVIDENCE**. Requests do not establish that
+the addressed controller is present. The excerpt has three MID 137 requests;
+the full original has 119. Neither contains confirmed identity responses.
+
+```sh
+zig build test
+zig build run
+# Local originals, when available (not tracked):
+zig build run -- captures/private/nov4thhardstop.j1708log
+```
+
+SocketCAN/candump input is explicitly rejected as `UnsupportedTransport`; the
+current Zig pipeline does not decode J1939. The separate CAN analysis is recorded
+in [RESEARCH_CORPUS.md](docs/RESEARCH_CORPUS.md). Checksums are assumed removed,
+not validated. Full researcher originals remain in ignored `captures/private/`.
+Single-parameter inspection is intentionally bounded: combined parameters and
+unsupported page-two records do not become identity evidence. External files are
+limited to 32 MiB and at most 128 supported identity/telemetry frames; background
+requests do not consume that frame buffer. Native `.tfc` parsing remains strict.
 
 ---
 
@@ -88,7 +157,7 @@ v0.9.1 keeps the v0.9 capture-file architecture and fixes the checksum-stripped 
 v0.9 was the first version whose default fingerprint path reads protocol frames
 from files rather than compiling the replay corpus directly into Zig source.
 
-That sounds small, but it creates the seam we need for real-world research:
+The capture-file boundary separates protocol input from fingerprinting:
 
 ```text
 future PLC receiver / diagnostic adapter / capture converter
@@ -120,7 +189,7 @@ zig build test
 zig build run
 ```
 
-With no arguments, `zig build run` processes all three included captures.
+With no arguments, `zig build run` processes six included captures/excerpts.
 
 To run one or more files explicitly:
 
@@ -168,9 +237,8 @@ J1708 boundary, and invalid metadata before the fingerprint engine sees them.
 Up through v0.8.1, a new replay required editing Zig source and recompiling.
 v0.9 lets us preserve protocol observations as data.
 
-When real trailer traffic becomes available, our first task will be to write a
-small converter from whatever the capture tool produces into `.tfc`. The
-fingerprint pipeline can then consume the observation unchanged.
+Unsupported capture formats require an adapter to the existing J1708/J1587
+input boundary. Supported external logs can be inspected directly.
 
 This is still not a J2497 demodulator and it does not yet issue live PID
 requests. Those remain separate future layers.
