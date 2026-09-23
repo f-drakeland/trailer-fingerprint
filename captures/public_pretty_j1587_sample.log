@@ -1,0 +1,4 @@
+# Public example message reproduced from the MIT-licensed pretty_j1587 README.
+# MID 137 (Trailer Brakes #1), PID 245 (Total Vehicle Distance).
+# This is protocol telemetry, not an identity fixture.
+MSG: [0x89,0xf5,0x4,0xe1,0x0,0x0,0x0]

@@ -1,0 +1,9 @@
+# Synthetic replay in the text shape documented by Truck Duck / pretty_j1587.
+# It is not a real field capture. The adapter exists so real logs can later
+# enter the same pipeline without being rewritten as .tfc by hand.
+(1727020800.000) j1708 89EA0653572D322E31 ; software identification
+(1727020800.010) j1708 89C011F310188944454D4F202A4142532D345332 ; ABS component id section 1
+(1727020800.020) j1708 A7C011F31017A744454D4F202A54504D532D382A ; TPMS component id section 1
+(1727020800.030) j1708 89ED113144454D4F303030303030303030303031 ; VIN
+(1727020800.040) j1708 89C00CF3114D2A4142532D32303939 ; ABS component id section 2
+(1727020800.050) j1708 A7C00BF31154504D532D32323037 ; TPMS component id section 2

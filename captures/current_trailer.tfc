@@ -1,0 +1,12 @@
+# Trailer Fingerprint capture v1
+# checksum-stripped J1708/J1587 after J2497/PLC demodulation
+@name protocol replay: current trailer, VIN available
+@class semitrailer
+@position single
+
+89 EA 06 53 57 2D 32 2E 31
+89 C0 11 F3 10 18 89 44 45 4D 4F 20 2A 41 42 53 2D 34 53 32
+A7 C0 11 F3 10 17 A7 44 45 4D 4F 20 2A 54 50 4D 53 2D 38 2A
+89 ED 11 31 44 45 4D 4F 30 30 30 30 30 30 30 30 30 30 30 31
+89 C0 0C F3 11 4D 2A 41 42 53 2D 32 30 39 39
+A7 C0 0B F3 11 54 50 4D 53 2D 32 32 30 37
