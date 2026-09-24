@@ -8,9 +8,9 @@ const report = @import("fingerprint_report.zig");
 
 pub fn main() !void {
     std.debug.print(
-        \\Trailer Fingerprint codename - equipment fingerprint engine v0.3
+        \\TFS - Trailer Fingerprint Software - experimental physical-equipment matcher
         \\Pipeline: synthetic discovery replay -> normalization -> fingerprinting
-        \\This preserves the v0.6 multi-unit / doubles design exercise.
+        \\Fictional profiles and observations; recognition is not field-validated.
         \\
     , .{});
 

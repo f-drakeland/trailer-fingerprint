@@ -1,8 +1,14 @@
 # Equipment fingerprint engine v0.1
 
+Experimental design, exercised by `zig build synthetic` with fictional profiles.
+The normal capture CLI does not assign these matches. A single matching module
+serial can currently produce `recognized`; that heuristic does not establish
+physical-equipment continuity when controllers can move or be replaced.
+
+
 This version tests the identity idea without pretending we can already decode a real trailer network.
 
-## Core rule
+## Original design goal (not yet established by the matcher)
 
 A physical trailer is **not** identified by one ECU serial number.
 

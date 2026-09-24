@@ -1,9 +1,4 @@
-//! Turns checksum-stripped J1708/J1587 messages into the generic discovery
-//! model consumed by the equipment fingerprint engine.
-//!
-//! v0.8 adds two pieces needed for real traffic:
-//!   * PID 192 multisection reassembly, including interleaved transmitters
-//!   * endpoint enrichment from PID 234 software ID and PID 237 VIN
+//! Owns decoded component observations independently of capture and reassembly buffers.
 
 const std = @import("std");
 const discovery = @import("discovery.zig");
@@ -15,7 +10,7 @@ pub const max_modules_per_unit = 12;
 pub const max_endpoints_per_unit = 12;
 pub const max_distance_observations = 12;
 
-pub const IngestError = j1587.DecodeError || multisection.ReassemblyError || error{
+pub const IngestError = std.mem.Allocator.Error || j1587.DecodeError || multisection.ReassemblyError || error{
     TooManyModules,
     TooManyEndpoints,
     ConflictingVin,
@@ -28,7 +23,9 @@ const EndpointState = struct {
     module_index: ?usize = null,
 };
 
+/// Owns its text. Deinitialize once; returned views borrow this result.
 pub const IngestedUnit = struct {
+    arena: std.heap.ArenaAllocator,
     observed_name: []const u8,
     unit_class: model.UnitClass,
     position: model.Position,
@@ -39,6 +36,10 @@ pub const IngestedUnit = struct {
     endpoint_count: usize = 0,
     distance_observations: [max_distance_observations]j1587.TotalVehicleDistance = undefined,
     distance_count: usize = 0,
+
+    pub fn deinit(self: *IngestedUnit) void {
+        self.arena.deinit();
+    }
 
     pub fn distanceSamples(self: *const IngestedUnit) []const j1587.TotalVehicleDistance {
         return self.distance_observations[0..self.distance_count];
@@ -77,7 +78,7 @@ pub const IngestedUnit = struct {
     ) IngestError!void {
         switch (pid) {
             j1587.pid_component_identification => {
-                const decoded = try j1587.decodeComponentData(source_mid, data);
+                const decoded = try j1587.decodeComponentData(source_mid, try self.arena.allocator().dupe(u8, data));
                 const endpoint_state = try self.endpoint(source_mid);
                 const discovered = decoded.discovered(endpoint_state.software);
 
@@ -93,7 +94,7 @@ pub const IngestedUnit = struct {
                 endpoint_state.module_index = index;
             },
             j1587.pid_software_identification => {
-                const software = j1587.decodeSoftwareData(data);
+                const software = try self.arena.allocator().dupe(u8, j1587.decodeSoftwareData(data));
                 const endpoint_state = try self.endpoint(source_mid);
                 endpoint_state.software = software;
                 if (endpoint_state.module_index) |index| {
@@ -105,7 +106,7 @@ pub const IngestedUnit = struct {
                 if (self.vin) |known| {
                     if (!std.mem.eql(u8, known, vin)) return error.ConflictingVin;
                 } else {
-                    self.vin = vin;
+                    self.vin = try self.arena.allocator().dupe(u8, vin);
                 }
             },
             j1587.pid_total_vehicle_distance => {
@@ -126,17 +127,20 @@ pub const IngestedUnit = struct {
 };
 
 pub fn ingestUnit(
+    allocator: std.mem.Allocator,
     observed_name: []const u8,
     unit_class: model.UnitClass,
     position: model.Position,
     messages: []const []const u8,
 ) IngestError!IngestedUnit {
     var result = IngestedUnit{
-        .observed_name = observed_name,
+        .arena = std.heap.ArenaAllocator.init(allocator),
+        .observed_name = undefined,
         .unit_class = unit_class,
         .position = position,
     };
-    result.endpoint_count = 0;
+    errdefer result.deinit();
+    result.observed_name = try result.arena.allocator().dupe(u8, observed_name);
 
     var reassembly = multisection.Bank.init();
 
@@ -170,7 +174,8 @@ test "multisection component IDs plus software and VIN form one discovered unit"
         "\xa7\xc0\x0b\xf3\x11TPMS-2207",
     };
 
-    var ingested = try ingestUnit("test", .semitrailer, .single, &messages);
+    var ingested = try ingestUnit(std.testing.allocator, "test", .semitrailer, .single, &messages);
+    defer ingested.deinit();
     const unit = ingested.discoveredUnit();
 
     try std.testing.expectEqual(@as(usize, 2), unit.modules.len);
@@ -183,7 +188,8 @@ test "PID 245 is retained as telemetry and not a module identity" {
         "\x89\xf5\x04\xe1\x00\x00\x00",
     };
 
-    var ingested = try ingestUnit("public-sample", .unknown, .unknown, &messages);
+    var ingested = try ingestUnit(std.testing.allocator, "public-sample", .unknown, .unknown, &messages);
+    defer ingested.deinit();
     const unit = ingested.discoveredUnit();
     const distances = ingested.distanceSamples();
 
@@ -201,6 +207,43 @@ test "conflicting VIN observations are rejected" {
 
     try std.testing.expectError(
         error.ConflictingVin,
-        ingestUnit("test", .semitrailer, .single, &messages),
+        ingestUnit(std.testing.allocator, "test", .semitrailer, .single, &messages),
     );
+}
+
+// Complete one transfer before starting the next: both use the same bank slot.
+test "owned identities survive slot reuse and capture mutation" {
+    var software = "\x89\xea\x06SW-2.1".*;
+    var vin = "\x89\xed\x111DEMO000000000001".*;
+    var name = "capture".*;
+    const messages = [_][]const u8{
+        &software,
+        &vin,
+        "\x89\xc0\x11\xf3\x10\x18\x89DEMO *ABS-4S2",
+        "\x89\xc0\x0c\xf3\x11M*ABS-2099",
+        "\xa7\xc0\x11\xf3\x10\x17\xa7DEMO *TPMS-8*",
+        "\xa7\xc0\x0b\xf3\x11TPMS-2207",
+    };
+    var ingested = try ingestUnit(std.testing.allocator, &name, .unknown, .unknown, &messages);
+    defer ingested.deinit();
+    @memset(&software, 0);
+    @memset(&vin, 0);
+    @memset(&name, 0);
+    const unit = ingested.discoveredUnit();
+    try std.testing.expectEqualStrings("capture", unit.observed_name);
+    try std.testing.expectEqualStrings("1DEMO000000000001", unit.vin.?);
+    try std.testing.expectEqualStrings("SW-2.1", unit.modules[0].identity.software.?);
+    try std.testing.expectEqualStrings("DEMO", unit.modules[0].identity.manufacturer);
+    try std.testing.expectEqualStrings("ABS-4S2M", unit.modules[0].identity.model);
+    try std.testing.expectEqualStrings("ABS-2099", unit.modules[0].identity.serial);
+    try std.testing.expectEqualStrings("TPMS-2207", unit.modules[1].identity.serial);
+}
+
+test "direct component identity owns its input" {
+    var raw = "\x89\xf3\x06\x89A*B*C".*;
+    const messages = [_][]const u8{&raw};
+    var ingested = try ingestUnit(std.testing.allocator, "direct", .unknown, .unknown, &messages);
+    defer ingested.deinit();
+    @memset(&raw, 0);
+    try std.testing.expectEqualStrings("C", ingested.discoveredUnit().modules[0].identity.serial);
 }

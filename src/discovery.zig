@@ -15,7 +15,7 @@ pub const DiscoverySource = enum {
     pub fn label(self: DiscoverySource) []const u8 {
         return switch (self) {
             .synthetic_replay => "synthetic replay",
-            .j2497_j1708 => "J2497 / J1708",
+            .j2497_j1708 => "J1708/J1587 (physical link unverified)",
             .trailer_j1939 => "trailer-side J1939",
             .unknown => "unknown source",
         };

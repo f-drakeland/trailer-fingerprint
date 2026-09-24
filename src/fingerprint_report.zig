@@ -3,20 +3,12 @@ const fingerprint = @import("fingerprint.zig");
 const model = @import("fingerprint_model.zig");
 const discovery = @import("discovery.zig");
 
-pub fn printHeader() void {
-    std.debug.print(
-        \\Trailer Fingerprint codename - equipment fingerprint engine v0.2
-        \\Pipeline: synthetic discovery replay -> normalization -> fingerprinting
-        \\No raw J2497 capture is decoded yet.
-        \\
-    , .{});
-}
-
 pub fn printDiscovery(unit: discovery.DiscoveredUnit) void {
-    std.debug.print("Discovery observations:\n", .{});
+    std.debug.print("Component observations:\n", .{});
     if (unit.vin) |vin| {
-        std.debug.print("  unit VIN observed: {s}\n", .{vin});
+        std.debug.print("  VIN payload observed: {s}\n", .{vin});
     }
+    if (unit.modules.len == 0) std.debug.print("  No component IDs decoded.\n", .{});
     for (unit.modules) |module| {
         std.debug.print("  {s}: {s}", .{ module.identity.kind.label(), module.source.label() });
         if (module.endpoint) |endpoint| {
@@ -25,13 +17,13 @@ pub fn printDiscovery(unit: discovery.DiscoveredUnit) void {
         if (module.endpoint_mid) |mid| {
             std.debug.print(" (MID {})", .{mid});
         }
+        std.debug.print(" make={s} model={s} serial={s}", .{ module.identity.manufacturer, module.identity.model, module.identity.serial });
         if (module.identity.software) |software| {
             std.debug.print(" software={s}", .{software});
         }
         std.debug.print("\n", .{});
     }
 }
-
 
 pub fn printDistanceTelemetry(samples: []const @import("j1587.zig").TotalVehicleDistance) void {
     if (samples.len == 0) return;
@@ -43,7 +35,7 @@ pub fn printDistanceTelemetry(samples: []const @import("j1587.zig").TotalVehicle
             .{ sample.source_mid, sample.miles, sample.kilometers },
         );
     }
-    std.debug.print("  Note: telemetry is retained as history, not used as an identity anchor.\n", .{});
+    std.debug.print("  Note: latest distance per source is shown; telemetry is not an identity anchor.\n", .{});
 }
 
 pub fn printUnit(

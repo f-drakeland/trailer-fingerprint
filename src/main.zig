@@ -21,8 +21,8 @@ const default_captures = [_][]const u8{
 
 pub fn main(init: std.process.Init) !void {
     std.debug.print(
-        \\Trailer Fingerprint codename - equipment fingerprint engine v0.11
-        \\Pipeline: capture/log file -> J1708/J1587 -> PID 192 reassembly -> identity enrichment -> normalization -> fingerprinting
+        \\TFS - Trailer Fingerprint Software - component capture inspection
+        \\Pipeline: capture/log file -> J1708/J1587 -> PID 192 reassembly -> component observations
         \\.tfc files are Trailer Fingerprint interchange captures; .log/.txt can use common J1708 logger or Truck Duck text shapes.
         \\Input still begins AFTER J2497/PLC demodulation; no waveform decoder is claimed yet.
         \\Pass one or more files after `--`, or run with no arguments for the included corpus.
@@ -75,24 +75,20 @@ fn runCapture(io: std.Io, allocator: std.mem.Allocator, path: []const u8) !void 
     }
 
     var ingested = try protocol_ingest.ingestUnit(
+        allocator,
         capture.name,
         capture.unit_class,
         capture.position,
         messages,
     );
+    defer ingested.deinit();
     const discovered = ingested.discoveredUnit();
 
     std.debug.print("Capture: {s}\n", .{path});
     report.printDiscovery(discovered);
     report.printDistanceTelemetry(ingested.distanceSamples());
 
-    const normalized = try normalizer.normalize(discovered);
-    const snapshot = normalized.snapshot();
-    report.printUnit(
-        snapshot,
-        fingerprint.matchEquipment(snapshot, &scenarios.known_profiles),
-        &scenarios.known_profiles,
-    );
+    std.debug.print("Physical-equipment identity: not established by this inspection.\n\n", .{});
 }
 
 fn isNativeCapture(path: []const u8) bool {
@@ -117,11 +113,13 @@ test "capture file parser feeds the real ingest and fingerprint path" {
     const messages = capture.messageSlices(&message_slices);
 
     var ingested = try protocol_ingest.ingestUnit(
+        std.testing.allocator,
         capture.name,
         capture.unit_class,
         capture.position,
         messages,
     );
+    defer ingested.deinit();
     const normalized = try normalizer.normalize(ingested.discoveredUnit());
     const snapshot = normalized.snapshot();
     const matched = fingerprint.matchEquipment(snapshot, &scenarios.known_profiles);
@@ -145,11 +143,13 @@ test "external logger text feeds the same ingest and fingerprint path" {
     const messages = capture.messageSlices(&message_slices);
 
     var ingested = try protocol_ingest.ingestUnit(
+        std.testing.allocator,
         "external-log-test",
         .unknown,
         .unknown,
         messages,
     );
+    defer ingested.deinit();
     const normalized = try normalizer.normalize(ingested.discoveredUnit());
     const snapshot = normalized.snapshot();
     const matched = fingerprint.matchEquipment(snapshot, &scenarios.known_profiles);
@@ -168,11 +168,13 @@ test "pretty_j1587 public sample reaches telemetry without inventing identity" {
     const messages = capture.messageSlices(&message_slices);
 
     var ingested = try protocol_ingest.ingestUnit(
+        std.testing.allocator,
         "public-pretty-j1587-sample",
         .unknown,
         .unknown,
         messages,
     );
+    defer ingested.deinit();
     const normalized = try normalizer.normalize(ingested.discoveredUnit());
     const snapshot = normalized.snapshot();
     const matched = fingerprint.matchEquipment(snapshot, &scenarios.known_profiles);
@@ -195,11 +197,12 @@ test {
 test "authentic request-only excerpt yields insufficient identity through full pipeline" {
     var audit = try capture_audit.inspect(@embedFile("fixtures/nov4thhardstop-excerpt.j1708log"));
     var slices: [capture_loader.max_frames][]const u8 = undefined;
-    var ingested = try protocol_ingest.ingestUnit("research excerpt", .unknown, .unknown, audit.capture.messageSlices(&slices));
+    var ingested = try protocol_ingest.ingestUnit(std.testing.allocator, "research excerpt", .unknown, .unknown, audit.capture.messageSlices(&slices));
     try std.testing.expectEqual(@as(usize, 0), ingested.module_count);
     try std.testing.expectEqual(@as(usize, 0), ingested.endpoint_count);
     try std.testing.expectEqual(@as(usize, 0), ingested.distance_count);
     try std.testing.expect(ingested.vin == null);
+    defer ingested.deinit();
     const normalized = try normalizer.normalize(ingested.discoveredUnit());
     const matched = fingerprint.matchEquipment(normalized.snapshot(), &scenarios.known_profiles);
     try std.testing.expectEqual(@import("fingerprint_model.zig").MatchStatus.insufficient_identity, matched.status);

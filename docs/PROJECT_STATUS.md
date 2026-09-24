@@ -1,6 +1,9 @@
-# Trailer Fingerprint — current project status
+# TFS — current project status
 
-Updated: 2026-09-23.
+Updated: 2026-09-24.
+
+Working name: Trailer Fingerprint Software (TFS). Original code and documentation
+use the [MIT license](../LICENSE); third-party material has separate terms.
 
 ## Objective and boundaries
 
@@ -23,8 +26,10 @@ J1939 ingestion are implemented.
   identity ingest. A malformed supported identity payload still fails closed.
 - PID 192 multisection reassembly; PID 243 component identity; PID 234 software
   metadata; optional PID 237 VIN; PID 245 as telemetry only.
-- Fingerprinting uses synthetic historical profiles. Requests and operational
-  telemetry alone yield insufficient identity evidence.
+- The capture CLI reports component observations without assigning equipment
+  identity. The separate synthetic demo uses fictional historical profiles.
+- Retained identity text is owned by the ingest result; reassembly slot reuse
+  and capture-buffer lifetimes cannot overwrite it.
 - SocketCAN input is explicitly rejected. The archived CAN investigation was a
   separate analysis, not functionality claimed by this executable.
 
@@ -46,7 +51,7 @@ Capture provenance, hashes and analysis details are recorded in
 - Default replay: existing synthetic/public examples plus the authentic excerpt.
 - Full local J1708 replay: 625 records; 592 requests; 119 MID 137 targets;
   27 quarantined records; six unsupported operational records; no modules/VIN;
-  insufficient identity evidence.
+  no physical-equipment identity assigned.
 - Full CAN file: expected `UnsupportedTransport`, not a fingerprint result.
 
 ## Evidence gaps
@@ -57,3 +62,20 @@ Validate a vendor decoder against observed bytes and an independently confirmed
 controller serial before declaring a positive identity fixture. Multi-parameter
 J1587 parsing, larger identity buffers, J1939 ingest and capture-grounded topology
 remain future work, not silently assumed capabilities.
+
+## First release completion criteria
+
+The first release is a local capture inspector for component identity evidence.
+It is complete when:
+
+- Supported inputs produce reproducible observations and explicit unsupported or
+  malformed-input outcomes, with request destinations kept separate from sources.
+- At least one shareable authentic identity-bearing capture has a documented
+  logger/checksum convention and an independently confirmed component identifier;
+  a regression fixture verifies the decoding. **This evidence is still missing.**
+- Tests and default replays pass, retained identity data survives buffer reuse,
+  and contributor documentation describes supported layouts and limits.
+
+Positive vendor decoding remains gated on that evidence. Physical-equipment
+continuity, live adapters, shared history, parts catalogs and electrical diagnostics
+are outside this release. No new protocol family is required to finish it.

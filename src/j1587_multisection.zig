@@ -24,6 +24,7 @@ pub const ReassemblyError = j1587.DecodeError || error{
 pub const ReassembledParameter = struct {
     source_mid: u8,
     pid: u8,
+    /// Borrows bank storage; copy before the next push or bank destruction.
     data: []const u8,
 };
 
