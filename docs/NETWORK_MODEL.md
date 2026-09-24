@@ -9,14 +9,14 @@ fleet-specific tracking.
 
 ## Current baseline and research limits
 
-The v0.11 Zig 0.16.0 code is a local protocol/fingerprint research baseline. It
+The Zig 0.16.0 code is a local capture-inspection research baseline. It
 loads `.tfc` captures and external logs, including common J1708 logger, Truck Duck,
 and `pretty_j1587` styles, after J2497/PLC waveform demodulation and J1708 checksum
 handling. It supports PID 192 multisection reassembly, PID 243 component identity,
-PID 234 software metadata, and optional PID 237 VIN. PID 245 distance is telemetry
-history, explicitly not an identity anchor.
+PID 234 software metadata, and optional PID 237 VIN. PID 245 distance retains the latest sample per source, explicitly not an identity
+anchor or persistent history.
 
-Current comparisons use fixture profiles; the code does not implement the shared
+The separate experimental matcher uses fixture profiles; the code does not implement the shared
 graph or component-migration history described here. Synthetic captures and
 scenarios are engineering fixtures and must remain clearly labeled as synthetic.
 The included public `pretty_j1587` sample is real public protocol data, but contains
@@ -88,7 +88,7 @@ separate. Where attribution is uncertain, the relationship remains unresolved.
 
 A matching serial alone cannot settle equipment continuity in a shared history
 where components may move. This is a research requirement beyond the current local
-fixture matcher, not a claim that v0.11 already resolves migration.
+fixture matcher, not a claim that the local prototype already resolves migration.
 
 ## Optional VIN, conflicts, and ambiguity
 

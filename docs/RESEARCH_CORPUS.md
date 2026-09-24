@@ -4,6 +4,13 @@ Inspected: 2026-09-23. Source: captures supplied by Sean via Dr. Jeremy Daily
 in support of the trailer-identification paper. Capture setup, trailer count,
 replay status and J2497 conversion hardware remain unverified.
 
+## Permissions
+
+Researcher-supplied captures and their excerpts are not covered by the project's
+MIT grant. Receipt and attribution alone do not establish redistribution or
+relicensing permission; no such permission is documented here. The public
+`pretty_j1587` example retains its upstream MIT terms and source attribution.
+
 ## Originals and reproducibility
 
 Full originals are copied byte-for-byte into ignored `captures/private/`. They are

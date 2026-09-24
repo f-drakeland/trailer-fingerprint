@@ -16,7 +16,7 @@ pub fn build(b: *std.Build) void {
 
     const run_fingerprint = b.addRunArtifact(fingerprint_exe);
     if (b.args) |args| run_fingerprint.addArgs(args);
-    const run_step = b.step("run", "Run the capture/log equipment fingerprint demo");
+    const run_step = b.step("run", "Inspect capture/log component observations");
     run_step.dependOn(&run_fingerprint.step);
 
     const synthetic_exe = b.addExecutable(.{
@@ -28,7 +28,7 @@ pub fn build(b: *std.Build) void {
         }),
     });
     const run_synthetic = b.addRunArtifact(synthetic_exe);
-    const synthetic_step = b.step("synthetic", "Run the preserved v0.6 synthetic consist demo");
+    const synthetic_step = b.step("synthetic", "Run the experimental synthetic equipment matcher");
     synthetic_step.dependOn(&run_synthetic.step);
 
     const diagnostic_exe = b.addExecutable(.{
