@@ -108,22 +108,29 @@ pub fn print(audit: *const Audit) void {
     std.debug.print("Supported identity/telemetry frames: {d}. Input assumes removed checksums; capture setup remains unverified.\n", .{audit.capture.frame_count});
 }
 
-test "authentic excerpt distinguishes requested MID 137 from responding sources" {
-    const audit = try inspect(@embedFile("fixtures/nov4thhardstop-excerpt.j1708log"));
-    try std.testing.expectEqual(@as(usize, 20), audit.records);
-    try std.testing.expectEqual(@as(usize, 15), audit.requests);
-    try std.testing.expectEqual(@as(usize, 3), audit.request_targets[137]);
+test "request to MID 137 is not mistaken for a response from MID 137" {
+    const audit = try inspect(
+        "88 80 F3 89\n" ++
+            "8B 31 F1\n",
+    );
+
+    try std.testing.expectEqual(@as(usize, 2), audit.records);
+    try std.testing.expectEqual(@as(usize, 1), audit.requests);
+    try std.testing.expectEqual(@as(usize, 1), audit.request_targets[137]);
     try std.testing.expectEqual(@as(usize, 0), audit.source_records[137]);
-    try std.testing.expectEqual(@as(usize, 2), audit.source_records[139]);
-    try std.testing.expectEqual(@as(usize, 5), audit.requested_pids[245]);
-    try std.testing.expectEqual(@as(usize, 5), audit.requested_pids[194]);
-    try std.testing.expectEqual(@as(usize, 5), audit.requested_pids[409]);
-    try std.testing.expectEqual(@as(usize, 3), audit.quarantined);
+    try std.testing.expectEqual(@as(usize, 1), audit.source_records[139]);
+    try std.testing.expectEqual(@as(usize, 1), audit.requested_pids[243]);
     try std.testing.expectEqual(@as(usize, 0), audit.capture.frame_count);
 }
 
-test "CAN fixture is rejected rather than interpreted as J1587" {
-    try std.testing.expectError(error.UnsupportedTransport, inspect(@embedFile("fixtures/candump-excerpt.log")));
+test "CAN input is rejected rather than interpreted as J1587" {
+    const synthetic_can =
+        "(1000.000000) can1 123#01020304\n";
+
+    try std.testing.expectError(
+        error.UnsupportedTransport,
+        inspect(synthetic_can),
+    );
 }
 
 test "request target bytes and opaque escape data cannot manufacture identities" {

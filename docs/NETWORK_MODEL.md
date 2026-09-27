@@ -22,9 +22,9 @@ scenarios are engineering fixtures and must remain clearly labeled as synthetic.
 The included public `pretty_j1587` sample is real public protocol data, but contains
 telemetry rather than usable identity anchors.
 
-Researcher-supplied J1708/CAN captures have now been inspected. The J1708 file
-contains directed requests to MID 137, but no confirmed identity response.
-The tracked excerpt is a negative identity fixture; see
+Researcher-supplied J1708/CAN captures have now been inspected locally. The J1708
+file contains directed requests to MID 137, but no confirmed identity response.
+The captures are not distributed with the public repository; see
 [RESEARCH_CORPUS.md](RESEARCH_CORPUS.md).
 
 Real-world J2497/J1708 identity-bearing data remains the main research bottleneck.

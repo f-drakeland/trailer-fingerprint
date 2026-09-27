@@ -42,13 +42,13 @@ Capture provenance, hashes and analysis details are recorded in
   records; no PID 254 or standard identity payloads recovered.
 - CAN: 539,992 frames; 296 reassembled transport payloads in the separate analysis;
   no standard VIN/component/software identification messages recovered.
-- Both are useful provenance-qualified background/negative fixtures. Neither is
-  a positive trailer identity fixture or proof of capture topology.
+- Both are useful provenance-qualified background/negative research inputs. Neither
+  is a positive trailer identity example or proof of capture topology.
 
 ## Validation
 
 - `zig build test`: protocol/fingerprint, synthetic and diagnostic suites pass.
-- Default replay: existing synthetic/public examples plus the authentic excerpt.
+- Default replay: synthetic fixtures and permitted public examples only.
 - Full local J1708 replay: 625 records; 592 requests; 119 MID 137 targets;
   27 quarantined records; six unsupported operational records; no modules/VIN;
   no physical-equipment identity assigned.

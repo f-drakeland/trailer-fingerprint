@@ -36,7 +36,8 @@ number is not automatically an orderable part number or proof of fitment.
 Hexadecimal `89` equals decimal `137`. In a message's source position it identifies
 the transmitter; in a directed request's destination field it identifies who is
 being asked. A request addressed to `89` proves only that the request was observed.
-The [authentic excerpt](RESEARCH_CORPUS.md) is a regression case for this distinction.
+Public regression tests use synthetic requests to enforce this distinction; the
+researcher-supplied captures remain local. See [RESEARCH_CORPUS.md](RESEARCH_CORPUS.md).
 
 ## Contribution boundaries
 

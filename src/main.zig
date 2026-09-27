@@ -16,7 +16,6 @@ const default_captures = [_][]const u8{
     "captures/fleet_twin.tfc",
     "captures/current_trailer_truckduck.log",
     "captures/public_pretty_j1587_sample.log",
-    "src/fixtures/nov4thhardstop-excerpt.j1708log",
 };
 
 pub fn main(init: std.process.Init) !void {
@@ -194,16 +193,35 @@ test {
     _ = protocol_ingest;
 }
 
-test "authentic request-only excerpt yields insufficient identity through full pipeline" {
-    var audit = try capture_audit.inspect(@embedFile("fixtures/nov4thhardstop-excerpt.j1708log"));
+test "synthetic request-only input yields insufficient identity through full pipeline" {
+    var audit = try capture_audit.inspect(
+        "88 80 F3 89\n",
+    );
+
     var slices: [capture_loader.max_frames][]const u8 = undefined;
-    var ingested = try protocol_ingest.ingestUnit(std.testing.allocator, "research excerpt", .unknown, .unknown, audit.capture.messageSlices(&slices));
+
+    var ingested = try protocol_ingest.ingestUnit(
+        std.testing.allocator,
+        "synthetic request-only input",
+        .unknown,
+        .unknown,
+        audit.capture.messageSlices(&slices),
+    );
+    defer ingested.deinit();
+
     try std.testing.expectEqual(@as(usize, 0), ingested.module_count);
     try std.testing.expectEqual(@as(usize, 0), ingested.endpoint_count);
     try std.testing.expectEqual(@as(usize, 0), ingested.distance_count);
     try std.testing.expect(ingested.vin == null);
-    defer ingested.deinit();
+
     const normalized = try normalizer.normalize(ingested.discoveredUnit());
-    const matched = fingerprint.matchEquipment(normalized.snapshot(), &scenarios.known_profiles);
-    try std.testing.expectEqual(@import("fingerprint_model.zig").MatchStatus.insufficient_identity, matched.status);
+    const matched = fingerprint.matchEquipment(
+        normalized.snapshot(),
+        &scenarios.known_profiles,
+    );
+
+    try std.testing.expectEqual(
+        @import("fingerprint_model.zig").MatchStatus.insufficient_identity,
+        matched.status,
+    );
 }

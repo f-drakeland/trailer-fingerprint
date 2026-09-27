@@ -19,11 +19,12 @@ zig build run -- path/to/capture.j1708log
 zig build synthetic
 ```
 
-The default run includes fictional identity fixtures, public telemetry and an
-attributed authentic request-only excerpt. `.tfc` files use the project's strict
-interchange format; external logs pass through a record audit. Output separates
-source MIDs, request destinations, opaque records and decoded observations.
-No command transmits diagnostic requests. SocketCAN input is rejected.
+The default run includes fictional identity fixtures and public telemetry.
+Researcher-supplied captures remain local and are not part of the default corpus.
+`.tfc` files use the project's strict interchange format; external logs pass
+through a record audit. Output separates source MIDs, request destinations,
+opaque records and decoded observations. No command transmits diagnostic
+requests. SocketCAN input is rejected.
 
 Start with the [protocol and domain guide](docs/PROTOCOL_REPLAY.md), then see
 [current scope and completion criteria](docs/PROJECT_STATUS.md).
