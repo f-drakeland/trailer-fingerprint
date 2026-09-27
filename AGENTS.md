@@ -12,7 +12,9 @@
   itself permanent physical-equipment identity. Never manufacture an identity
   from telemetry, opaque vendor data or missing responses.
 - Preserve original research captures byte-for-byte under captures/private/
-  (ignored). Document hashes, provenance and extraction for checked-in excerpts.
+  (ignored). Document hashes, provenance and analysis boundaries for privately
+  held captures. Do not check in researcher-supplied excerpts without explicit
+  redistribution permission.
 - Run zig build test and appropriate replay checks for parser/ingest changes.
   Record material limitations and keep changes local unless publishing is requested.
 - Keep contributor guidance concise in README.md. Link to existing authoritative
