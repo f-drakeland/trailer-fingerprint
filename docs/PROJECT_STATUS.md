@@ -21,9 +21,10 @@ migrate between units. Shared history/component migration is a design model, not
 an implemented network service. The local fixture matcher does not settle those
 research questions.
 
-The host baseline uses Zig 0.16.0. Input starts after J2497 demodulation and assumes
-removed J1708 checksums. No live diagnostic requests, waveform decoding, or native
-J1939 ingestion are implemented.
+The host baseline uses Zig 0.16.0. Input starts after J2497 demodulation.
+Native `.tfc` fixtures are checksum-stripped; external logger checksum conventions
+must be established per source. No live diagnostic requests, waveform decoding, or
+native J1939 ingestion are implemented.
 
 ## Current implementation
 

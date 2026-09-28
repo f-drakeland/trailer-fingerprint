@@ -1,4 +1,4 @@
-//! Conservative inspection of external checksum-stripped J1708 records.
+//! Conservative inspection of external J1708 logger records.
 //! Source observations, request destinations and identity evidence stay separate.
 //! Supports single-parameter records; unsupported/ambiguous records never become
 //! identities. This is not a checksum validator or a J1939 decoder.

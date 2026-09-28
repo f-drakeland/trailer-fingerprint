@@ -11,9 +11,10 @@ fleet-specific tracking.
 
 The Zig 0.16.0 code is a local capture-inspection research baseline. It
 loads `.tfc` captures and external logs, including common J1708 logger, Truck Duck,
-and `pretty_j1587` styles, after J2497/PLC waveform demodulation and J1708 checksum
-handling. It supports PID 192 multisection reassembly, PID 243 component identity,
-PID 234 software metadata, and optional PID 237 VIN. PID 245 distance retains the latest sample per source, explicitly not an identity
+and `pretty_j1587` styles, after J2497/PLC waveform demodulation. Native `.tfc`
+captures omit J1708 checksums; external logger checksum conventions must be
+established per source. It supports PID 192 multisection reassembly, PID 243
+component identity, PID 234 software metadata, and optional PID 237 VIN. PID 245 distance retains the latest sample per source, explicitly not an identity
 anchor or persistent history.
 
 The separate experimental matcher uses fixture profiles; the code does not implement the shared
