@@ -1,8 +1,7 @@
 # Research capture record
 
 Inspected: 2026-09-23. Source: researcher-supplied captures associated with the
-cited trailer-identification study. Capture setup, trailer count, replay status
-and J2497 conversion hardware remain unverified.
+cited trailer-identification study. Capture setup, trailer count and J2497 conversion hardware remain unverified.
 
 ## Permissions
 
@@ -26,10 +25,10 @@ not required for the regular test suite or default demo. No originals were edite
 
 ## J1708 result
 
-625 records over 1213.411337 seconds, with 20 distinct payloads. The checksum-
-stripped interpretation gives 592 MID 136 requests: 395 for PID 245, 99 for
-PID 194 and 98 for PID 409 (via extended PID 384). Targets include MIDs 137,
-138, 139, 246 and 247.
+625 records over 1213.411337 seconds, with 20 distinct payloads. Protocol
+interpretation identifies 592 directed requests from MID 136: 395 for PID 245,
+99 for PID 194 and 98 for PID 409 (via extended PID 384). Targets include MIDs
+137, 138, 139, 246 and 247.
 
 MID 137 is addressed 119 times (80 PID 245, 19 PID 194, 20 PID 409), but never
 appears as a source. The capture contains directed requests from MID 136 to MID 137 for PID 245.
@@ -61,6 +60,15 @@ The paper's contextual serial 3026601464 was not found as ASCII or four-byte
 little-/big-endian data within individual CAN payloads. This does not exclude
 every proprietary encoding. Neither capture reproduces the paper's identity
 exchange; both remain useful background and negative identity examples.
+
+## End-to-end TFS validation
+
+On 2026-09-27, the private original `nov4thhardstop.j1708log` was processed
+end-to-end through the TFS capture CLI. The run audited 625 records, including
+592 directed requests and 119 requests addressed to MID 137, while observing zero
+MID 137 source records and zero supported identity/telemetry frames.
+
+No component IDs were decoded, and physical-equipment identity was not established.
 
 ## Public tests
 

@@ -8,7 +8,7 @@ not a replacement for SAE standards or a complete identifier dictionary.
 | Layer / term | Meaning in this project | Boundary |
 | --- | --- | --- |
 | J2497 / PLC | Communication over the vehicle power line | Demodulation happens outside TFS |
-| J1708 | Message transport carrying a source MID and data | Input assumes checksums already removed |
+| J1708 | Message transport carrying a source MID and data | TFS does not verify or strip checksums at this boundary; logger framing must be established first |
 | J1587 | Meanings and layouts of parameters in those messages | TFS decodes a limited subset |
 | MID | Message identifier used to distinguish transmitting systems | A role/address is not a unique serial |
 | PID | Parameter identifier selecting a data layout | Interpretation depends on framing and context |
@@ -43,8 +43,8 @@ researcher-supplied captures remain local. See [RESEARCH_CORPUS.md](RESEARCH_COR
 
 Follow bytes through `capture_audit.zig` (record classification), `j1587.zig`
 (parameter decoding), `j1587_multisection.zig` (reassembly), then
-`protocol_ingest.zig` (owned observations). Input framing and logger conventions
-must be established before assigning meaning. Combined/unsupported messages do
+`protocol_ingest.zig` (owned observations). Input framing and logger conventions must be established before treating record
+bytes as checksums, payload structure, or protocol meaning. Combined/unsupported messages do
 not silently become identities.
 
 Synthetic fixtures show intended behavior, not hardware support. A real source

@@ -1,9 +1,17 @@
 # TFS — current project status
 
-Updated: 2026-09-24.
+Updated: 2026-09-27.
 
 Working name: Trailer Fingerprint Software (TFS). Original code and documentation
 use the [MIT license](../LICENSE); third-party material has separate terms.
+
+## Current milestone
+
+**v0.12 — Authentic Data Ingestion**
+
+TFS can now inspect authentic external J1708 logger data through the same
+record-audit and protocol-ingest boundary used by the public tooling. Authentic
+research captures remain private and are not distributed with the repository.
 
 ## Objective and boundaries
 
@@ -49,9 +57,11 @@ Capture provenance, hashes and analysis details are recorded in
 
 - `zig build test`: protocol/fingerprint, synthetic and diagnostic suites pass.
 - Default replay: synthetic fixtures and permitted public examples only.
-- Full local J1708 replay: 625 records; 592 requests; 119 MID 137 targets;
-  27 quarantined records; six unsupported operational records; no modules/VIN;
-  no physical-equipment identity assigned.
+- Full private J1708 replay (`nov4thhardstop.j1708log`): 625 records; 592
+  directed requests; 119 requests addressed to MID 137; zero MID 137 source
+  records; 27 quarantined records; six unsupported operational records; zero
+  supported identity or telemetry frames; no component IDs were decoded;
+  physical-equipment identity not established.
 - Full CAN file: expected `UnsupportedTransport`, not a fingerprint result.
 
 ## Evidence gaps

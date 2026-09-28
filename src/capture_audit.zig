@@ -105,7 +105,7 @@ pub fn print(audit: *const Audit) void {
     if (audit.request_targets[137] > 0 and audit.source_records[137] == 0) {
         std.debug.print("MID 137 queried; no response observed.\n", .{});
     }
-    std.debug.print("Supported identity/telemetry frames: {d}. Input assumes removed checksums; capture setup remains unverified.\n", .{audit.capture.frame_count});
+    std.debug.print("Supported identity/telemetry frames: {d}. Checksum status and capture setup remain unverified.\n", .{audit.capture.frame_count});
 }
 
 test "request to MID 137 is not mistaken for a response from MID 137" {
