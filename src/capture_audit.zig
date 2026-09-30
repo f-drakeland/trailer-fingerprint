@@ -14,6 +14,13 @@ pub const Audit = struct {
     unsupported: usize = 0,
     requests: usize = 0,
     vendor_escape: usize = 0,
+    // Retained PID 254 frames preserve their exact bytes for later analysis.
+    // They never become supported identity data; buffer overflow is counted explicitly.
+    opaque_vendor_frames: [capture_loader.max_frames]capture_loader.Frame =
+        [_]capture_loader.Frame{.{}} ** capture_loader.max_frames,
+    opaque_vendor_frame_count: usize = 0,
+    opaque_vendor_frames_dropped: usize = 0,
+
     source_records: [256]usize = [_]usize{0} ** 256,
     request_targets: [256]usize = [_]usize{0} ** 256,
     requested_pids: [512]usize = [_]usize{0} ** 512,
@@ -44,10 +51,19 @@ pub const Audit = struct {
             return;
         }
         if (pid == 254) {
-            // The third byte is a destination MID, not a length or serial.
+            // Vendor-proprietary traffic stays opaque: retain the raw frame,
+            // but do not assign semantics or promote it into supported ingest.
             self.source_records[source] += 1;
             self.vendor_escape += 1;
             self.parameters[pid] += 1;
+
+            if (self.opaque_vendor_frame_count < capture_loader.max_frames) {
+                self.opaque_vendor_frames[self.opaque_vendor_frame_count] = frame;
+                self.opaque_vendor_frame_count += 1;
+            } else {
+                self.opaque_vendor_frames_dropped += 1;
+            }
+
             return;
         }
         if (pid == 255) {
@@ -100,7 +116,14 @@ pub fn print(audit: *const Audit) void {
     std.debug.print("Record audit: {d} records; {d} quarantined; {d} unsupported parameters; {d} ignored lines\n", .{
         audit.records, audit.quarantined, audit.unsupported, audit.ignored_lines,
     });
-    std.debug.print("Directed requests: {d}; vendor escape records: {d}\n", .{ audit.requests, audit.vendor_escape });
+    std.debug.print("Directed requests: {d}; vendor escape records: {d}\n", .{
+        audit.requests,
+        audit.vendor_escape,
+    });
+    std.debug.print(
+        "Opaque vendor evidence: {d} preserved; {d} dropped at buffer limit\n",
+        .{ audit.opaque_vendor_frame_count, audit.opaque_vendor_frames_dropped },
+    );
     std.debug.print("MID 137: {d} requests addressed to it; {d} source records observed\n", .{ audit.request_targets[137], audit.source_records[137] });
     if (audit.request_targets[137] > 0 and audit.source_records[137] == 0) {
         std.debug.print("MID 137 queried; no response observed.\n", .{});
@@ -135,9 +158,34 @@ test "CAN input is rejected rather than interpreted as J1587" {
 
 test "request target bytes and opaque escape data cannot manufacture identities" {
     const audit = try inspect("88 80 F3 89\n88 FF 80 ED 89\n89 FE AC 01\n89 80 89\n");
+
     try std.testing.expectEqual(@as(usize, 2), audit.request_targets[137]);
     try std.testing.expectEqual(@as(usize, 1), audit.vendor_escape);
     try std.testing.expectEqual(@as(usize, 1), audit.quarantined);
+
+    try std.testing.expectEqual(@as(usize, 1), audit.opaque_vendor_frame_count);
+    try std.testing.expectEqual(@as(usize, 0), audit.opaque_vendor_frames_dropped);
+
+    const opaque_frame = audit.opaque_vendor_frames[0];
+    try std.testing.expectEqualSlices(
+        u8,
+        &[_]u8{ 0x89, 0xFE, 0xAC, 0x01 },
+        opaque_frame.bytes[0..opaque_frame.len],
+    );
+
+    try std.testing.expectEqual(@as(usize, 0), audit.capture.frame_count);
+}
+
+test "opaque vendor evidence overflow is counted without failing audit" {
+    const audit = try inspect("89 FE AC 01\n" ** 129);
+
+    try std.testing.expectEqual(@as(usize, 129), audit.records);
+    try std.testing.expectEqual(@as(usize, 129), audit.vendor_escape);
+    try std.testing.expectEqual(
+        capture_loader.max_frames,
+        audit.opaque_vendor_frame_count,
+    );
+    try std.testing.expectEqual(@as(usize, 1), audit.opaque_vendor_frames_dropped);
     try std.testing.expectEqual(@as(usize, 0), audit.capture.frame_count);
 }
 

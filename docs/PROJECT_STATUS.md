@@ -1,6 +1,6 @@
 # TFS — current project status
 
-Updated: 2026-09-27.
+Updated: 2026-09-29.
 
 Working name: Trailer Fingerprint Software (TFS). Original code and documentation
 use the [MIT license](../LICENSE); third-party material has separate terms.
@@ -30,7 +30,8 @@ native J1939 ingestion are implemented.
 
 - Native .tfc replay and external J1708 logger text.
 - External record audit separates source MIDs from directed request targets.
-  Counts PID 128/384 requests, opaque PID 254 records and quarantined input.
+  Counts PID 128/384 requests, retains bounded PID 254 frames as opaque evidence
+  with explicit overflow accounting, and quarantines unsupported input.
 - Single-parameter inspection only; combined/unsupported formats do not enter
   identity ingest. A malformed supported identity payload still fails closed.
 - PID 192 multisection reassembly; PID 243 component identity; PID 234 software
