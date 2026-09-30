@@ -8,6 +8,14 @@ moved; a controller serial alone does not establish permanent trailer identity.
 observations.** Physical-equipment matching is a separate synthetic experiment.
 Neither is field-validated trailer identification. Shared history remains a design.
 
+## New here?
+
+If trailer electronics, J1708/J1587, or equipment identity are unfamiliar, start
+with [WTFiS Trailer Fingerprint Software?](docs/START_HERE.md).
+
+The guide begins with the physical trailer, follows one message down to the bytes,
+and explains where TFS stops when the evidence does.
+
 ## Run
 
 Use **Zig 0.16.0** from the repository root. No hardware is needed for the fixtures.
