@@ -15,6 +15,8 @@ pub fn main() void {
         &scenarios.profiles,
     );
 
+    var clock = runner.VirtualClock{};
+
     var summary = model.InspectionSummary{};
     report.printInspectionHeader(backend.trailer_id);
 
@@ -25,6 +27,7 @@ pub fn main() void {
 
         const run = runner.runCircuit(
             &backend,
+            &clock,
             circuit,
             thresholds,
             config,

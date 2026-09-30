@@ -11,6 +11,19 @@ needs to supply:
 3. `sample(time_ms)` returning `model.Sample`
 4. `disable()`
 
+Timing is a separate dependency. The runner uses a clock that provides:
+
+1. `nowMs()`
+2. `waitUntilMs(deadline_ms)`
+
+The runner owns sampling cadence using absolute deadlines. The clock owns elapsed
+time; the backend owns hardware access. Simulator runs use a virtual clock so tests
+remain deterministic and instantaneous. A physical implementation must use a real
+monotonic time source.
+
+Sample timestamps record observed elapsed time rather than assuming that requested
+deadlines were met exactly.
+
 The simulator satisfies that contract today. A future bench backend can satisfy the same
 contract while hiding GPIO, I2C/SPI, ADCs, current monitors, protected high-side
 switches, and MCU-specific details.
