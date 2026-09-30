@@ -44,7 +44,7 @@ pub fn runCircuit(
 
     const requested = @min(config.sample_count, sample_buffer.len);
     var used: usize = 0;
-    var protection_tripped = false;
+    var software_overcurrent_abort = false;
 
     while (used < requested) {
         const sample_index: u64 = @intCast(used);
@@ -60,8 +60,16 @@ pub fn runCircuit(
         sample_buffer[used] = reading;
         used += 1;
 
-        if (reading.current > thresholds.overcurrent_limit) {
-            protection_tripped = true;
+        const hardware_fault =
+            reading.hardware_diagnostic == .fault_reported;
+        const software_overcurrent =
+            reading.current > thresholds.overcurrent_limit;
+
+        if (software_overcurrent) {
+            software_overcurrent_abort = true;
+        }
+
+        if (hardware_fault or software_overcurrent) {
             break;
         }
     }
@@ -70,7 +78,7 @@ pub fn runCircuit(
         .trailer_id = backend.trailer_id,
         .circuit = circuit,
         .samples = sample_buffer[0..used],
-        .protection_tripped = protection_tripped,
+        .software_overcurrent_abort = software_overcurrent_abort,
     };
 }
 
@@ -145,6 +153,33 @@ const SlowStubBackend = struct {
     }
 };
 
+const FaultStubBackend = struct {
+    trailer_id: []const u8 = "FAULT-STUB",
+    output_enabled: bool = false,
+
+    pub fn enable(self: *FaultStubBackend, circuit: model.Circuit) void {
+        _ = circuit;
+        self.output_enabled = true;
+    }
+
+    pub fn disable(self: *FaultStubBackend) void {
+        self.output_enabled = false;
+    }
+
+    pub fn sample(self: *const FaultStubBackend, time_ms: u32) model.Sample {
+        _ = self;
+
+        return .{
+            .time_ms = time_ms,
+            .voltage = 12.6,
+            .current = 4.0,
+            .hardware_diagnostic = if (time_ms >= 100)
+                .fault_reported
+            else
+                .none,
+        };
+    }
+};
 test "runner uses the backend contract rather than the simulator type" {
     var backend = StubBackend{};
     var clock = VirtualClock{};
@@ -160,7 +195,7 @@ test "runner uses the backend contract rather than the simulator type" {
     );
 
     try std.testing.expectEqualStrings("STUB-TRAILER", run.trailer_id);
-    try std.testing.expect(run.protection_tripped);
+    try std.testing.expect(run.software_overcurrent_abort);
     try std.testing.expectEqual(@as(usize, 3), run.samples.len);
 
     try std.testing.expectEqual(@as(u32, 0), run.samples[0].time_ms);
@@ -228,5 +263,33 @@ test "runner records actual elapsed time when backend work exceeds the interval"
     try std.testing.expectEqual(@as(u32, 130), run.samples[1].time_ms);
     try std.testing.expectEqual(@as(u32, 260), run.samples[2].time_ms);
 
+    try std.testing.expect(!backend.output_enabled);
+}
+
+test "runner aborts on hardware fault without calling it overcurrent" {
+    var backend = FaultStubBackend{};
+    var clock = VirtualClock{};
+    var samples: [6]model.Sample = undefined;
+
+    const run = runCircuit(
+        &backend,
+        &clock,
+        .tail_marker,
+        .{},
+        .{
+            .sample_interval_ms = 100,
+            .sample_count = 6,
+        },
+        &samples,
+    );
+
+    try std.testing.expectEqual(@as(usize, 2), run.samples.len);
+    try std.testing.expectEqual(
+        model.HardwareDiagnostic.fault_reported,
+        run.samples[1].hardware_diagnostic,
+    );
+
+    // A generic hardware fault is evidence of a fault, not proof of overcurrent.
+    try std.testing.expect(!run.software_overcurrent_abort);
     try std.testing.expect(!backend.output_enabled);
 }

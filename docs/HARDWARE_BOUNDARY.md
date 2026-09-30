@@ -24,6 +24,18 @@ monotonic time source.
 Sample timestamps record observed elapsed time rather than assuming that requested
 deadlines were met exactly.
 
+Each sample may also carry a generic hardware diagnostic state. A backend reports
+`fault_reported` when the physical output or measurement hardware indicates a fault,
+without guessing its cause.
+
+The runner aborts a test when either:
+
+1. measured current exceeds the configured software overcurrent limit, or
+2. the hardware reports a fault.
+
+Those observations remain distinct. A software overcurrent abort does not prove that hardware
+protection independently tripped, and a generic hardware fault does not prove overcurrent.
+
 The simulator satisfies that contract today. A future bench backend can satisfy the same
 contract while hiding GPIO, I2C/SPI, ADCs, current monitors, protected high-side
 switches, and MCU-specific details.

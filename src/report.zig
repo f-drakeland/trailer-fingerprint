@@ -12,8 +12,15 @@ pub fn printAnalysis(result: model.Analysis) void {
     std.debug.print("\nCircuit: {s}\n", .{result.circuit.label()});
     std.debug.print("Result:  {s}\n", .{result.classification.label()});
 
-    if (result.protection_tripped) {
-        std.debug.print("Output protection: TRIPPED -- circuit power removed\n", .{});
+    if (result.software_overcurrent_abort) {
+        std.debug.print(
+            "Software overcurrent abort: TRIGGERED -- circuit power removed\n",
+            .{},
+        );
+    }
+
+    if (result.hardware_fault_reported) {
+        std.debug.print("Hardware diagnostic: FAULT REPORTED\n", .{});
     }
 
     if (result.stats) |stats| {
@@ -47,5 +54,5 @@ pub fn printSummary(summary: model.InspectionSummary) void {
     std.debug.print("Total circuits tested: {}\n", .{summary.total});
     std.debug.print("Stable responses:      {}\n", .{summary.stable});
     std.debug.print("Needs attention:       {}\n", .{summary.attention});
-    std.debug.print("Protection aborts:     {}\n", .{summary.aborted});
+    std.debug.print("Test aborts:     {}\n", .{summary.aborted});
 }

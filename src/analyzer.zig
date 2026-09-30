@@ -1,6 +1,16 @@
 const std = @import("std");
 const model = @import("model.zig");
 
+fn hasHardwareFault(samples: []const model.Sample) bool {
+    for (samples) |sample| {
+        if (sample.hardware_diagnostic == .fault_reported) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 pub fn analyze(run: model.TestRun, thresholds: model.Thresholds) model.Analysis {
     const stats = calculateStatistics(run.samples) orelse {
         return .{
@@ -8,14 +18,18 @@ pub fn analyze(run: model.TestRun, thresholds: model.Thresholds) model.Analysis 
             .circuit = run.circuit,
             .classification = .insufficient_data,
             .stats = null,
-            .protection_tripped = run.protection_tripped,
+            .software_overcurrent_abort = run.software_overcurrent_abort,
+            .hardware_fault_reported = hasHardwareFault(run.samples),
         };
     };
 
-    const classification: model.Classification = if (
-        run.protection_tripped or stats.max_current > thresholds.overcurrent_limit
-    )
+    const hardware_fault_reported = hasHardwareFault(run.samples);
+
+    const classification: model.Classification = if (run.software_overcurrent_abort or
+        stats.max_current > thresholds.overcurrent_limit)
         .overcurrent_abort
+    else if (hardware_fault_reported)
+        .hardware_fault_abort
     else if (stats.min_voltage < thresholds.min_source_voltage)
         .low_source_voltage
     else if (stats.max_current <= thresholds.no_load_current)
@@ -30,7 +44,8 @@ pub fn analyze(run: model.TestRun, thresholds: model.Thresholds) model.Analysis 
         .circuit = run.circuit,
         .classification = classification,
         .stats = stats,
-        .protection_tripped = run.protection_tripped,
+        .software_overcurrent_abort = run.software_overcurrent_abort,
+        .hardware_fault_reported = hardware_fault_reported,
     };
 }
 
@@ -102,7 +117,7 @@ pub fn updateSummary(summary: *model.InspectionSummary, classification: model.Cl
 
     switch (classification) {
         .stable_response => summary.stable += 1,
-        .overcurrent_abort => summary.aborted += 1,
+        .overcurrent_abort, .hardware_fault_abort => summary.aborted += 1,
         else => summary.attention += 1,
     }
 }
@@ -155,7 +170,7 @@ test "large current swing is unstable load" {
     try std.testing.expectEqual(model.Classification.unstable_load, result.classification);
 }
 
-test "protection trip wins over other classifications" {
+test "software overcurrent abort wins over other classifications" {
     const samples = [_]model.Sample{
         .{ .time_ms = 0, .voltage = 12.6, .current = 4.0 },
         .{ .time_ms = 100, .voltage = 11.8, .current = 14.0 },
@@ -165,7 +180,7 @@ test "protection trip wins over other classifications" {
         .trailer_id = "TEST-4",
         .circuit = .tail_marker,
         .samples = &samples,
-        .protection_tripped = true,
+        .software_overcurrent_abort = true,
     }, .{});
 
     try std.testing.expectEqual(model.Classification.overcurrent_abort, result.classification);
@@ -192,4 +207,71 @@ test "baseline comparison detects material change" {
 
     try std.testing.expect(comparison.comparable);
     try std.testing.expect(comparison.changed);
+}
+
+test "hardware fault is classified as hardware fault abort" {
+    const samples = [_]model.Sample{
+        .{
+            .time_ms = 0,
+            .voltage = 12.6,
+            .current = 4.0,
+        },
+        .{
+            .time_ms = 100,
+            .voltage = 12.6,
+            .current = 4.0,
+            .hardware_diagnostic = .fault_reported,
+        },
+    };
+
+    const result = analyze(.{
+        .trailer_id = "FAULT-TEST",
+        .circuit = .tail_marker,
+        .samples = &samples,
+    }, .{});
+
+    try std.testing.expectEqual(
+        model.Classification.hardware_fault_abort,
+        result.classification,
+    );
+}
+
+test "hardware fault abort is counted as an aborted test" {
+    var summary = model.InspectionSummary{};
+
+    updateSummary(&summary, .hardware_fault_abort);
+
+    try std.testing.expectEqual(@as(usize, 1), summary.total);
+    try std.testing.expectEqual(@as(usize, 1), summary.aborted);
+    try std.testing.expectEqual(@as(usize, 0), summary.attention);
+}
+
+test "overcurrent classification preserves simultaneous hardware fault evidence" {
+    const samples = [_]model.Sample{
+        .{
+            .time_ms = 0,
+            .voltage = 12.6,
+            .current = 4.0,
+        },
+        .{
+            .time_ms = 100,
+            .voltage = 11.8,
+            .current = 16.0,
+            .hardware_diagnostic = .fault_reported,
+        },
+    };
+
+    const result = analyze(.{
+        .trailer_id = "FAULT-OVERCURRENT",
+        .circuit = .tail_marker,
+        .samples = &samples,
+        .software_overcurrent_abort = true,
+    }, .{});
+
+    try std.testing.expectEqual(
+        model.Classification.overcurrent_abort,
+        result.classification,
+    );
+    try std.testing.expect(result.software_overcurrent_abort);
+    try std.testing.expect(result.hardware_fault_reported);
 }

@@ -24,11 +24,18 @@ pub const Circuit = enum {
     }
 };
 
+/// Diagnostic state reported by the physical output or measurement hardware.
+pub const HardwareDiagnostic = enum {
+    none,
+    fault_reported,
+};
+
 /// One observation captured while Trailer Fingerprint has a circuit energized.
 pub const Sample = struct {
     time_ms: u32,
     voltage: f32,
     current: f32,
+    hardware_diagnostic: HardwareDiagnostic = .none,
 };
 
 /// The complete evidence captured from one circuit test.
@@ -37,9 +44,9 @@ pub const TestRun = struct {
     circuit: Circuit,
     samples: []const Sample,
 
-    /// A real Trailer Fingerprint output stage must be able to remove power when a
-    /// protection threshold is crossed. The simulator preserves that event.
-    protection_tripped: bool = false,
+    /// The runner observed current above its configured software limit and aborted
+    /// the test. This does not claim that hardware protection independently tripped.
+    software_overcurrent_abort: bool = false,
 };
 
 pub const Classification = enum {
@@ -47,6 +54,7 @@ pub const Classification = enum {
     no_load_detected,
     unstable_load,
     overcurrent_abort,
+    hardware_fault_abort,
     low_source_voltage,
     insufficient_data,
 
@@ -56,6 +64,7 @@ pub const Classification = enum {
             .no_load_detected => "NO LOAD DETECTED",
             .unstable_load => "UNSTABLE LOAD",
             .overcurrent_abort => "OVERCURRENT / TEST ABORTED",
+            .hardware_fault_abort => "HARDWARE FAULT / TEST ABORTED",
             .low_source_voltage => "LOW SOURCE VOLTAGE",
             .insufficient_data => "INSUFFICIENT DATA",
         };
@@ -85,7 +94,8 @@ pub const Analysis = struct {
     circuit: Circuit,
     classification: Classification,
     stats: ?Statistics,
-    protection_tripped: bool,
+    software_overcurrent_abort: bool,
+    hardware_fault_reported: bool,
 };
 
 pub const Baseline = struct {
