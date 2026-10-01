@@ -65,6 +65,9 @@ understanding the equipment we depend on can make everyday work a little easier.
 Behind every repair, part number and software tool are people whose time and
 livelihoods matter. That is worth remembering as this project grows.
 
+The project also considers the privacy implications that may arise if equipment
+observations prove persistently linkable over time.
+
 Commercial use and independent forks are welcome. This statement adds no
 conditions to the MIT license.
 
