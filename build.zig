@@ -15,7 +15,7 @@ pub fn build(b: *std.Build) void {
     b.installArtifact(fingerprint_exe);
 
     const run_fingerprint = b.addRunArtifact(fingerprint_exe);
-    if (b.args) |args| run_fingerprint.addArgs(args);
+    run_fingerprint.addPassthruArgs();
     const run_step = b.step("run", "Inspect capture/log component observations");
     run_step.dependOn(&run_fingerprint.step);
 

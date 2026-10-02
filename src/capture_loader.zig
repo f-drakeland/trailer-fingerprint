@@ -23,7 +23,7 @@ pub const CaptureError = error{
 };
 
 pub const Frame = struct {
-    bytes: [max_frame_bytes]u8 = [_]u8{0} ** max_frame_bytes,
+    bytes: [max_frame_bytes]u8 = @splat(0),
     len: usize = 0,
 };
 
@@ -31,7 +31,7 @@ pub const Capture = struct {
     name: []const u8 = "unnamed capture",
     unit_class: model.UnitClass = .unknown,
     position: model.Position = .unknown,
-    frames: [max_frames]Frame = [_]Frame{.{}} ** max_frames,
+    frames: [max_frames]Frame = @splat(.{}),
     frame_count: usize = 0,
 
     pub fn messageSlices(

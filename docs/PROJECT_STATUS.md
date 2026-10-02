@@ -1,6 +1,6 @@
 # TFS — current project status
 
-Updated: 2026-09-29.
+Updated: 2026-10-02.
 
 Working name: Trailer Fingerprint Software (TFS). Original code and documentation
 use the [MIT license](../LICENSE); third-party material has separate terms.
@@ -21,7 +21,7 @@ migrate between units. Shared history/component migration is a design model, not
 an implemented network service. The local fixture matcher does not settle those
 research questions.
 
-The host baseline uses Zig 0.16.0. Input starts after J2497 demodulation.
+The host baseline uses Zig 0.17.0. Input starts after J2497 demodulation.
 Native `.tfc` fixtures are checksum-stripped; external logger checksum conventions
 must be established per source. No live diagnostic requests, waveform decoding, or
 native J1939 ingestion are implemented.
@@ -57,7 +57,7 @@ Capture provenance, hashes and analysis details are recorded in
 
 ## Validation
 
-- `zig build test`: protocol/fingerprint, synthetic and diagnostic suites pass.
+- Zig 0.17.0 `zig build test`: protocol/fingerprint, synthetic and diagnostic suites pass.
 - Default replay: synthetic fixtures and permitted public examples only.
 - Full private J1708 replay (`nov4thhardstop.j1708log`): 625 records; 592
   directed requests; 119 requests addressed to MID 137; zero MID 137 source

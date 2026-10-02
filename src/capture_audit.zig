@@ -17,14 +17,14 @@ pub const Audit = struct {
     // Retained PID 254 frames preserve their exact bytes for later analysis.
     // They never become supported identity data; buffer overflow is counted explicitly.
     opaque_vendor_frames: [capture_loader.max_frames]capture_loader.Frame =
-        [_]capture_loader.Frame{.{}} ** capture_loader.max_frames,
+        @splat(.{}),
     opaque_vendor_frame_count: usize = 0,
     opaque_vendor_frames_dropped: usize = 0,
 
-    source_records: [256]usize = [_]usize{0} ** 256,
-    request_targets: [256]usize = [_]usize{0} ** 256,
-    requested_pids: [512]usize = [_]usize{0} ** 512,
-    parameters: [256]usize = [_]usize{0} ** 256,
+    source_records: [256]usize = @splat(0),
+    request_targets: [256]usize = @splat(0),
+    requested_pids: [512]usize = @splat(0),
+    parameters: [256]usize = @splat(0),
     // Only supported identity/telemetry frames reach the existing bounded ingest.
     capture: capture_loader.Capture = .{},
 
@@ -177,7 +177,11 @@ test "request target bytes and opaque escape data cannot manufacture identities"
 }
 
 test "opaque vendor evidence overflow is counted without failing audit" {
-    const audit = try inspect("89 FE AC 01\n" ** 129);
+    comptime var input: []const u8 = "";
+    inline for (0..129) |_| {
+        input = input ++ "89 FE AC 01\n";
+    }
+    const audit = try inspect(input);
 
     try std.testing.expectEqual(@as(usize, 129), audit.records);
     try std.testing.expectEqual(@as(usize, 129), audit.vendor_escape);
@@ -190,7 +194,12 @@ test "opaque vendor evidence overflow is counted without failing audit" {
 }
 
 test "more than 128 background records do not exhaust the identity buffer" {
-    const audit = try inspect("(1.0) j1708 8880f589\n" ** 625);
+    comptime var input: []const u8 = "";
+    inline for (0..625) |_| {
+        input = input ++ "(1.0) j1708 8880f589\n";
+    }
+    const audit = try inspect(input);
+
     try std.testing.expectEqual(@as(usize, 625), audit.requests);
     try std.testing.expectEqual(@as(usize, 0), audit.capture.frame_count);
 }
