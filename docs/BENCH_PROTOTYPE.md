@@ -45,15 +45,15 @@ overcurrent protection.
 
 Do not buy a microcontroller solely because it is fashionable or because it says Zig.
 MicroZig currently documents Raspberry Pi Pico / Pico 2 as its best-supported hardware,
-but its current getting-started flow tracks Zig master rather than the project's existing
-Zig 0.16 host toolchain.
+but its current getting-started flow tracks Zig master rather than the project's
+Zig 0.17.0 host baseline.
 
 Source:
 - https://microzig.tech/docs/getting-started/
 
 That means the sensible prototype split is still open:
 
-- keep the Trailer Fingerprint host/core logic on Zig 0.16
+- keep the Trailer Fingerprint host/core logic on Zig 0.17.0
 - evaluate a small hardware controller separately
 - require the hardware side to satisfy the backend contract in `runner.zig`
 

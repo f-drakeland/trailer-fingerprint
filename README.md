@@ -18,7 +18,7 @@ and explains where TFS stops when the evidence does.
 
 ## Run
 
-Use **Zig 0.16.0** from the repository root. No hardware is needed for the fixtures.
+Use **Zig 0.17.0** from the repository root. No hardware is needed for the fixtures.
 
 ```sh
 zig build test

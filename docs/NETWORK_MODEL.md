@@ -9,7 +9,7 @@ fleet-specific tracking.
 
 ## Current baseline and research limits
 
-The Zig 0.16.0 code is a local capture-inspection research baseline. It
+The Zig 0.17.0 code is a local capture-inspection research baseline. It
 loads `.tfc` captures and external logs, including common J1708 logger, Truck Duck,
 and `pretty_j1587` styles, after J2497/PLC waveform demodulation. Native `.tfc`
 captures omit J1708 checksums; external logger checksum conventions must be
