@@ -25,14 +25,40 @@ pub fn main() void {
         // For now the simulator backend creates those readings on demand.
         var sample_buffer: [8]model.Sample = undefined;
 
-        const run = runner.runCircuit(
+        const run = switch (runner.runCircuit(
             &backend,
             &clock,
             circuit,
-            thresholds,
             config,
             &sample_buffer,
-        );
+        )) {
+            .completed => |completed_run| completed_run,
+
+            .failed => |failure| {
+                std.debug.print("\nCircuit: {s}\n", .{failure.circuit.label()});
+                std.debug.print(
+                    "Run execution failed during {s}: {s}\n",
+                    .{
+                        @tagName(failure.primary_operation),
+                        @errorName(failure.primary_error),
+                    },
+                );
+
+                if (failure.shutdown_error) |shutdown_err| {
+                    std.debug.print(
+                        "Shutdown also failed: {s}\n",
+                        .{@errorName(shutdown_err)},
+                    );
+                }
+
+                std.debug.print(
+                    "Preserved samples: {}\n",
+                    .{failure.samples.len},
+                );
+
+                return;
+            },
+        };
 
         const result = analyzer.analyze(run, thresholds);
         analyzer.updateSummary(&summary, result.classification);

@@ -22,14 +22,14 @@ pub fn analyze(run: model.TestRun, thresholds: model.Thresholds) model.Analysis 
             .hardware_fault_reported = hasHardwareFault(run.samples),
         };
     };
-
     const hardware_fault_reported = hasHardwareFault(run.samples);
 
-    const classification: model.Classification = if (run.software_overcurrent_abort or
-        stats.max_current > thresholds.overcurrent_limit)
+    const classification: model.Classification = if (run.software_overcurrent_abort)
         .overcurrent_abort
     else if (hardware_fault_reported)
         .hardware_fault_abort
+    else if (stats.max_current > thresholds.high_current_limit)
+        .high_current_observed
     else if (stats.min_voltage < thresholds.min_source_voltage)
         .low_source_voltage
     else if (stats.max_current <= thresholds.no_load_current)
@@ -274,4 +274,26 @@ test "overcurrent classification preserves simultaneous hardware fault evidence"
     );
     try std.testing.expect(result.software_overcurrent_abort);
     try std.testing.expect(result.hardware_fault_reported);
+}
+
+test "high current without runner abort is observed rather than called an abort" {
+    const samples = [_]model.Sample{
+        .{ .time_ms = 0, .voltage = 12.6, .current = 4.0 },
+        .{ .time_ms = 100, .voltage = 12.4, .current = 16.0 },
+    };
+
+    const result = analyze(.{
+        .trailer_id = "HIGH-CURRENT",
+        .circuit = .tail_marker,
+        .samples = &samples,
+        .software_overcurrent_abort = false,
+    }, .{
+        .high_current_limit = 15.0,
+    });
+
+    try std.testing.expectEqual(
+        model.Classification.high_current_observed,
+        result.classification,
+    );
+    try std.testing.expect(!result.software_overcurrent_abort);
 }

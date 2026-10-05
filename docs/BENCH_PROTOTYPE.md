@@ -17,6 +17,16 @@ For one low-current 12 V test load, Trailer Fingerprint needs to demonstrate tha
 
 That is enough to replace `Simulator` with a first `BenchBackend` later.
 
+The software boundary is now prepared for hardware-access failures. A bench backend
+must report failures from output control and measurement separately from electrical
+fault observations. Partial samples must remain available for inspection, and a
+shutdown failure must remain visible rather than being treated as successful power
+removal.
+
+The runner's software current-abort limit is also separate from analyzer thresholds.
+Neither one replaces independent hardware current limiting or short-circuit
+protection.
+
 ## Candidate measurement component
 
 A useful component family to evaluate is TI's INA238 / INA238-Q1. It measures shunt

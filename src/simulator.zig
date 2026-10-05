@@ -40,17 +40,17 @@ pub const Simulator = struct {
         };
     }
 
-    pub fn enable(self: *Simulator, circuit: model.Circuit) void {
+    pub fn enable(self: *Simulator, circuit: model.Circuit) !void {
         self.active_circuit = circuit;
         self.output_enabled = true;
     }
 
-    pub fn disable(self: *Simulator) void {
+    pub fn disable(self: *Simulator) !void {
         self.output_enabled = false;
         self.active_circuit = null;
     }
 
-    pub fn sample(self: *const Simulator, time_ms: u32) model.Sample {
+    pub fn sample(self: *const Simulator, time_ms: u32) !model.Sample {
         if (!self.output_enabled) {
             return .{ .time_ms = time_ms, .voltage = 0.0, .current = 0.0 };
         }
@@ -153,7 +153,7 @@ test "simulator does not produce a powered sample while disabled" {
     };
 
     var sim = Simulator.init("SIM", &profiles);
-    const reading = sim.sample(0);
+    const reading = try sim.sample(0);
 
     try std.testing.expectEqual(@as(f32, 0.0), reading.voltage);
     try std.testing.expectEqual(@as(f32, 0.0), reading.current);

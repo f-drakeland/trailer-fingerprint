@@ -53,6 +53,7 @@ pub const Classification = enum {
     stable_response,
     no_load_detected,
     unstable_load,
+    high_current_observed,
     overcurrent_abort,
     hardware_fault_abort,
     low_source_voltage,
@@ -63,6 +64,7 @@ pub const Classification = enum {
             .stable_response => "STABLE RESPONSE",
             .no_load_detected => "NO LOAD DETECTED",
             .unstable_load => "UNSTABLE LOAD",
+            .high_current_observed => "HIGH CURRENT OBSERVED",
             .overcurrent_abort => "OVERCURRENT / TEST ABORTED",
             .hardware_fault_abort => "HARDWARE FAULT / TEST ABORTED",
             .low_source_voltage => "LOW SOURCE VOLTAGE",
@@ -76,7 +78,7 @@ pub const Thresholds = struct {
     min_source_voltage: f32 = 10.5,
     no_load_current: f32 = 0.10,
     unstable_current_span: f32 = 2.0,
-    overcurrent_limit: f32 = 15.0,
+    high_current_limit: f32 = 15.0,
 };
 
 pub const Statistics = struct {
